@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { projectAPI, authAPI, postAPI, userAPI } from '../services/api';
 import ProjectCard from '../components/ProjectCard';
 import PostCard from '../components/PostCard';
-import { User, MapPin, Globe, Github, Linkedin, Twitter, Sparkles, Edit3, Check, X, Plus, UserPlus, UserCheck, MessageSquare, Award, Trophy, Star } from 'lucide-react';
+import { User, MapPin, Globe, Github, Linkedin, Twitter, Sparkles, Edit3, Check, X, Plus, UserPlus, UserCheck, MessageSquare, Award, Trophy, Star, Target } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
@@ -36,6 +36,7 @@ export default function ProfilePage() {
     bio: '',
     location: '',
     skills: '',
+    companyNeeds: '',
     github: '',
     linkedin: '',
     twitter: '',
@@ -74,6 +75,7 @@ export default function ProfilePage() {
             bio: u.bio || '',
             location: u.location || '',
             skills: u.skills?.join(', ') || '',
+            companyNeeds: u.companyNeeds?.join(', ') || '',
             github: u.github || '',
             linkedin: u.linkedin || '',
             twitter: u.twitter || '',
@@ -123,7 +125,12 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
-      const skillsArray = formData.skills
+      const skillsArray = (formData.skills || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const companyNeedsArray = (formData.companyNeeds || '')
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
@@ -131,6 +138,7 @@ export default function ProfilePage() {
       const res = await authAPI.updateProfile({
         ...formData,
         skills: skillsArray,
+        companyNeeds: companyNeedsArray,
       });
 
       if (res.data.success) {
@@ -335,18 +343,37 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type="text"
+                      placeholder="e.g. San Francisco, CA or Remote"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
                     />
                   </div>
-                  {profileUser?.role !== 'company' && (
+                  {profileUser?.role === 'company' ? (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                        <span>Company Needs (comma separated)</span>
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">e.g. React, Node, Python</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. React, Node.js, Python, Figma, AI/ML"
+                        value={formData.companyNeeds}
+                        onChange={(e) => setFormData({ ...formData, companyNeeds: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
+                        Students with matching skills will be recommended on your feed.
+                      </span>
+                    </div>
+                  ) : (
                     <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Skills (comma separated)
                       </label>
                       <input
                         type="text"
+                        placeholder="e.g. PHP, React, Node, MongoDB, Python"
                         value={formData.skills}
                         onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                         className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
@@ -405,7 +432,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                {/* Skills */}
+                {/* Skills for Student */}
                 {profileUser.role !== 'company' && profileUser.skills && profileUser.skills.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {profileUser.skills.map((skill, i) => (
@@ -416,6 +443,33 @@ export default function ProfilePage() {
                         {skill}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {/* Company Needs for Company */}
+                {profileUser.role === 'company' && (
+                  <div className="pt-2">
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Company Needs / Tech Looking For</span>
+                    </p>
+                    {profileUser.companyNeeds && profileUser.companyNeeds.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {profileUser.companyNeeds.map((need, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 px-3 py-1 rounded-xl border border-amber-300 dark:border-amber-800"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            {need}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                        {isMe ? 'No company needs listed yet. Click "Edit Profile" to add skills your company is looking for.' : 'No talent needs listed yet.'}
+                      </p>
+                    )}
                   </div>
                 )}
 

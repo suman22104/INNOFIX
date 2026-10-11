@@ -7,6 +7,7 @@ import CreatePostModal from '../components/CreatePostModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import RecommendedForYou from '../components/RecommendedForYou';
 import PeopleYouMayKnow from '../components/PeopleYouMayKnow';
+import CompanyTalentMatch from '../components/CompanyTalentMatch';
 import AIAssistantDrawer from '../components/AIAssistantDrawer';
 import { Rocket, Calendar, Plus, Sparkles, Flame, UserCheck, Wand2, Image as ImageIcon, FileText, MessageSquare, TrendingUp, Bookmark, PenLine } from 'lucide-react';
 
@@ -119,8 +120,13 @@ export default function DashboardPage() {
 
             {/* Smart Feed Tabs moved to Right Sidebar */}
 
-            {/* Content-Based Recommender Section */}
-            {feedTab === 'foryou' && <RecommendedForYou />}
+            {/* Company Talent Matching Section for Company Accounts */}
+            {user?.role === 'company' && feedTab === 'foryou' && (
+              <CompanyTalentMatch />
+            )}
+
+            {/* Content-Based Recommender Section (Hidden for Company Users) */}
+            {user?.role !== 'company' && feedTab === 'foryou' && <RecommendedForYou />}
 
             {/* Posts Stream */}
             <div className="pb-10">

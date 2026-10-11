@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Rocket, Calendar, Briefcase, Users } from 'lucide-react';
 import { aiAPI } from '../services/aiApi';
+import { useAuth } from '../context/AuthContext';
 import MatchBadge from './MatchBadge';
 
 const TABS = [
@@ -44,6 +45,9 @@ const subtitleOf = (tab, item) => {
 };
 
 export default function RecommendedForYou() {
+  const { user } = useAuth();
+  if (user?.role === 'company') return null;
+
   const [data, setData] = useState(null);
   const [strategy, setStrategy] = useState('personalized');
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 
-export default function MatchBadge({ score, title }) {
+export default function MatchBadge({ score, title, size = 'md', className = '' }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -33,15 +33,36 @@ export default function MatchBadge({ score, title }) {
   // Start at full circumference (0 progress) and animate to target offset
   const offset = mounted ? circumference - (score / 100) * circumference : circumference;
 
+  const sizeClasses =
+    size === 'sm'
+      ? 'w-12 h-12 sm:w-14 sm:h-14'
+      : size === 'xs'
+      ? 'w-10 h-10'
+      : 'w-16 h-16 sm:w-20 sm:h-20';
+
+  const textSize =
+    size === 'sm'
+      ? 'text-[11px] sm:text-[12px]'
+      : size === 'xs'
+      ? 'text-[9px]'
+      : 'text-[13px] sm:text-[15px]';
+
+  const labelSize =
+    size === 'sm'
+      ? 'text-[6px] sm:text-[7px]'
+      : size === 'xs'
+      ? 'text-[5px]'
+      : 'text-[7px] sm:text-[8px]';
+
   return (
-    <div title={title} className="relative shrink-0 flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20">
+    <div title={title} className={`relative shrink-0 flex flex-col items-center justify-center ${sizeClasses} ${className}`}>
       <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90">
         <circle
           cx="50"
           cy="50"
           r="40"
           stroke="currentColor"
-          strokeWidth="12"
+          strokeWidth={size === 'sm' || size === 'xs' ? '14' : '12'}
           fill="none"
           className={tone.track}
         />
@@ -50,7 +71,7 @@ export default function MatchBadge({ score, title }) {
           cy="50"
           r="40"
           stroke="currentColor"
-          strokeWidth="12"
+          strokeWidth={size === 'sm' || size === 'xs' ? '14' : '12'}
           fill="none"
           strokeDasharray="251.3"
           strokeDashoffset={offset}
@@ -60,10 +81,10 @@ export default function MatchBadge({ score, title }) {
       </svg>
       {/* Fade and scale in the text slightly after the stroke starts */}
       <div 
-        className={`absolute inset-0 flex flex-col items-center justify-center text-center translate-x-[1px] translate-y-[1px] ${tone.text} transition-all duration-1000 delay-300 ease-out ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+        className={`absolute inset-0 flex flex-col items-center justify-center text-center translate-x-[0.5px] translate-y-[0.5px] ${tone.text} transition-all duration-1000 delay-300 ease-out ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
       >
-        <span className="text-[13px] sm:text-[15px] font-black leading-none">{score}%</span>
-        <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-wider mt-1">match</span>
+        <span className={`${textSize} font-black leading-none`}>{score}%</span>
+        <span className={`${labelSize} font-bold uppercase tracking-wider mt-0.5`}>match</span>
       </div>
     </div>
   );

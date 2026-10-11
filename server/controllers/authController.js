@@ -29,6 +29,7 @@ exports.register = async (req, res) => {
       companyWebsite,
       industry,
       skills,
+      companyNeeds,
       headline,
     } = req.body;
 
@@ -65,6 +66,7 @@ exports.register = async (req, res) => {
       role: finalRole,
       headline: headline || '',
       skills: Array.isArray(skills) ? skills : typeof skills === 'string' ? skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+      companyNeeds: Array.isArray(companyNeeds) ? companyNeeds : typeof companyNeeds === 'string' ? companyNeeds.split(',').map((s) => s.trim()).filter(Boolean) : [],
       reputation: 0,
       badges: [
         {
@@ -100,6 +102,7 @@ exports.register = async (req, res) => {
         headline: user.headline,
         bio: user.bio,
         skills: user.skills,
+        companyNeeds: user.companyNeeds,
         companyName: user.companyName,
         reputation: user.reputation,
         badges: user.badges,
@@ -199,6 +202,7 @@ exports.login = async (req, res) => {
         headline: user.headline,
         bio: user.bio,
         skills: user.skills,
+        companyNeeds: user.companyNeeds,
         companyName: user.companyName,
         reputation: user.reputation,
         badges: user.badges || [],
@@ -326,15 +330,25 @@ exports.getMe = async (req, res) => {
 
 // @desc    Update user profile & privacy settings
 // @route   PUT /api/auth/profile
-// @access  Private
 exports.updateProfile = async (req, res) => {
   try {
+    let skills = req.body.skills;
+    if (typeof skills === 'string') {
+      skills = skills.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+
+    let companyNeeds = req.body.companyNeeds;
+    if (typeof companyNeeds === 'string') {
+      companyNeeds = companyNeeds.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+
     const fieldsToUpdate = {
       fullName: req.body.fullName,
       headline: req.body.headline,
       bio: req.body.bio,
       location: req.body.location,
-      skills: req.body.skills,
+      skills,
+      companyNeeds,
       github: req.body.github,
       linkedin: req.body.linkedin,
       twitter: req.body.twitter,

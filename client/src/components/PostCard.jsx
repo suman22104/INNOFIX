@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { postAPI } from '../services/api';
 import { Heart, MessageCircle, Share2, Trash2, Send, Sparkles, Bookmark, ShieldCheck, Edit3, Check, X, Image, MoreHorizontal, MessageSquare, Lightbulb, Rocket, Calendar, Briefcase, Users } from 'lucide-react';
@@ -9,6 +9,7 @@ export default function PostCard({ post, onUpdate, onDelete }) {
   const toast = useToast();
   const { user, isAuthenticated, isBookmarked, toggleBookmark } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [likesCount, setLikesCount] = useState(post.likes?.length || post.likesCount || 0);
   const [isLiked, setIsLiked] = useState(
     user ? post.likes?.some((id) => (id._id || id) === user._id || (id._id || id) === user.id) : false
@@ -23,7 +24,11 @@ export default function PostCard({ post, onUpdate, onDelete }) {
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLike = async () => {
-    if (!isAuthenticated) return toast.info('Please sign in to like posts');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to like posts');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     try {
       const res = await postAPI.like(post._id);
       if (res.data.success) {
@@ -36,14 +41,23 @@ export default function PostCard({ post, onUpdate, onDelete }) {
   };
 
   const handleBookmarkToggle = async () => {
-    if (!isAuthenticated) return toast.info('Please sign in to save posts');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to save posts');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     const newState = await toggleBookmark('post', post._id);
     setBookmarked(newState);
   };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!commentText.trim() || !isAuthenticated) return;
+    if (!commentText.trim()) return;
+    if (!isAuthenticated) {
+      toast.info('Please sign in to comment');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     setSubmittingComment(true);
     try {
       const res = await postAPI.addComment(post._id, { content: commentText.trim() });

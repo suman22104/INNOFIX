@@ -83,6 +83,12 @@ const userSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    companyNeeds: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     reputation: {
       type: Number,
       default: 0,

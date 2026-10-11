@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Users, CheckCircle, ExternalLink, Link, Globe, Trophy, Video, Wrench, Coffee, Gift } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { eventAPI } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 export default function EventCard({ event, onUpdate }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   const [isRegistered, setIsRegistered] = useState(
@@ -18,7 +21,11 @@ export default function EventCard({ event, onUpdate }) {
   const [loading, setLoading] = useState(false);
 
   const handleToggleRegister = async () => {
-    if (!isAuthenticated) return toast.info('Please sign in to RSVP for events');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to RSVP for events');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     setLoading(true);
     try {
       const res = await eventAPI.register(event._id);

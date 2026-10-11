@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { communityAPI } from '../services/api';
 import CreateCommunityModal from '../components/CreateCommunityModal';
 import { Users, Plus, Search, ArrowRight, Shield, Lightbulb, Globe, ChevronDown } from 'lucide-react';
@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function CommunitiesPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   const [communities, setCommunities] = useState([]);
@@ -52,7 +54,11 @@ export default function CommunitiesPage() {
   }, [search, selectedCategory]);
 
   const handleJoinToggle = async (communityId, isMember) => {
-    if (!isAuthenticated) return toast.info('Please sign in to join communities');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to join communities');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     try {
       if (isMember) {
         await communityAPI.leave(communityId);
@@ -108,7 +114,11 @@ export default function CommunitiesPage() {
             {['admin', 'company'].includes(user?.role) && (
               <button
                 onClick={() => {
-                  if (!isAuthenticated) return toast.info('Please sign in to create a community');
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to create a community');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
                   setShowModal(true);
                 }}
                 className="w-full xl:w-auto shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"

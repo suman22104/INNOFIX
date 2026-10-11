@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Briefcase, MapPin, DollarSign, ExternalLink, Check, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { opportunityAPI } from '../services/api';
@@ -6,6 +7,8 @@ import MatchBadge from './MatchBadge';
 import { useToast } from '../context/ToastContext';
 
 export default function OpportunityCard({ opportunity, onUpdate, match }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -22,7 +25,11 @@ export default function OpportunityCard({ opportunity, onUpdate, match }) {
 
   const handleApply = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) return toast.info('Please sign in to apply');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to apply');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await opportunityAPI.apply(opportunity._id, {
@@ -140,7 +147,14 @@ export default function OpportunityCard({ opportunity, onUpdate, match }) {
             </span>
           ) : (
             <button
-              onClick={() => setShowApplyModal(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  toast.info('Please sign in to apply');
+                  navigate('/login', { state: { from: location } });
+                  return;
+                }
+                setShowApplyModal(true);
+              }}
               className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <span>Apply Now</span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import { GraduationCap, Building2, ArrowRight, User, Mail, Lock, Globe, AlertCircle, Lightbulb,  } from 'lucide-react';
@@ -7,16 +7,21 @@ import PasswordToggle from '../components/PasswordToggle';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [role, setRole] = useState('student');
   const [justLogged, setJustLogged] = useState(false);
   const { isAuthenticated } = useAuth();
 
+  const redirectPath = location.state?.from?.pathname
+    ? location.state.from.pathname + (location.state.from.search || '')
+    : '/dashboard';
+
   React.useEffect(() => {
     if (isAuthenticated && !justLogged) {
-      navigate('/dashboard');
+      navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, justLogged, navigate]);
+  }, [isAuthenticated, justLogged, navigate, redirectPath]);
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -24,6 +29,7 @@ export default function RegisterPage() {
     password: '',
     companyName: '',
     companyWebsite: '',
+    companyNeeds: '',
     industry: '',
   });
   const [error, setError] = useState('');
@@ -44,7 +50,7 @@ export default function RegisterPage() {
       if (res.data.success) {
         setJustLogged(true);
         login(res.data.token, res.data.user);
-        navigate('/dashboard');
+        navigate(redirectPath, { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Could not create your account. Please try again.');
@@ -220,6 +226,24 @@ export default function RegisterPage() {
                     }
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white dark:focus:bg-slate-800 transition-all"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Company Needs (Skills/Tech seeking)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. React, Node.js, Python, UI/UX"
+                    value={formData.companyNeeds}
+                    onChange={(e) =>
+                      setFormData({ ...formData, companyNeeds: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                  />
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                    Comma separated skills to match students for your hiring & project needs
+                  </p>
                 </div>
               </div>
             )}

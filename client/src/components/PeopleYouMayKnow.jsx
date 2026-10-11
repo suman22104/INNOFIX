@@ -73,10 +73,10 @@ export default function PeopleYouMayKnow({ limit = 4, className = '' }) {
         </div>
         <div className="flex flex-col min-w-0">
           <h3 className="font-extrabold text-[15px] text-slate-900 dark:text-slate-100 leading-tight truncate">
-            People You May Know
+            {currentUser?.role === 'company' ? 'Matching Student Talent' : 'People You May Know'}
           </h3>
           <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate mt-0.5">
-            Suggested for you
+            {currentUser?.role === 'company' ? 'Matched by skills & tech' : 'Suggested for you'}
           </span>
         </div>
       </div>

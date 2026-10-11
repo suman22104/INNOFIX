@@ -405,3 +405,102 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ success: false, message: error.message || 'Error deleting account' });
   }
 };
+
+// @desc    Get student profiles matching company's tech/talent needs
+// @route   GET /api/users/matched-students
+// @access  Private
+exports.getMatchedStudents = async (req, res) => {
+  try {
+    const user = req.user;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 30);
+
+    const needs = Array.isArray(user.companyNeeds) ? user.companyNeeds : [];
+    const normalizedNeeds = needs
+      .map((n) => (n || '').trim().toLowerCase())
+      .filter(Boolean);
+    const hasNeedsConfigured = normalizedNeeds.length > 0;
+
+    // Find all student accounts
+    const students = await User.find({
+      role: 'student',
+      _id: { $ne: user._id },
+    })
+      .select('fullName username avatar avatarUrl role headline bio skills location reputation badges followers')
+      .lean();
+
+    const scoredStudents = students.map((student) => {
+      const studentSkills = Array.isArray(student.skills) ? student.skills : [];
+
+      // Match each student skill against company needs
+      const matchedSkills = [];
+      studentSkills.forEach((skill) => {
+        const lowerSkill = (skill || '').trim().toLowerCase();
+        if (!lowerSkill) return;
+        const matchesNeed = normalizedNeeds.some((need) => {
+          return (
+            lowerSkill === need ||
+            lowerSkill.includes(need) ||
+            need.includes(lowerSkill)
+          );
+        });
+        if (matchesNeed) {
+          matchedSkills.push(skill);
+        }
+      });
+
+      const matchCount = matchedSkills.length;
+      const matchPercentage = hasNeedsConfigured
+        ? Math.min(100, Math.round((matchCount / Math.max(normalizedNeeds.length, 1)) * 100))
+        : 0;
+
+      // Ranking score
+      const score = matchCount * 1000 + matchPercentage * 10 + (student.reputation || 0);
+
+      const isFollowing = (user.following || []).some(
+        (id) => String(id) === String(student._id)
+      );
+
+      return {
+        _id: student._id,
+        fullName: student.fullName,
+        username: student.username,
+        avatar: student.avatar,
+        avatarUrl: student.avatarUrl,
+        headline: student.headline,
+        bio: student.bio,
+        location: student.location,
+        skills: studentSkills,
+        reputation: student.reputation || 0,
+        badges: student.badges || [],
+        matchingSkills: matchedSkills,
+        matchCount,
+        matchPercentage,
+        isFollowing,
+        score,
+      };
+    });
+
+    // If company has configured needs, ONLY return students who have matching skills
+    let finalStudents = scoredStudents;
+    if (hasNeedsConfigured) {
+      finalStudents = scoredStudents.filter((s) => s.matchCount > 0);
+      finalStudents.sort((a, b) => b.score - a.score);
+    } else {
+      // If company has no needs configured yet, sort top builders by reputation
+      finalStudents.sort((a, b) => (b.reputation || 0) - (a.reputation || 0));
+    }
+
+    res.status(200).json({
+      success: true,
+      hasNeedsConfigured,
+      companyNeeds: needs,
+      count: finalStudents.length,
+      students: finalStudents.slice(0, limit),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching matched students',
+    });
+  }
+};

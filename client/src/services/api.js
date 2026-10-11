@@ -58,6 +58,7 @@ export const userAPI = {
   getLeaderboard: (params) => API.get('/users/leaderboard', { params }),
   getMyLeaderboardPosition: (params) => API.get('/users/leaderboard/me', { params }),
   getReputationRules: () => API.get('/users/reputation/rules'),
+  getMatchedStudents: (params) => API.get('/users/matched-students', { params }),
   exportData: () => API.get('/users/account/export-data'),
   deleteAccount: () => API.delete('/users/account'),
 };

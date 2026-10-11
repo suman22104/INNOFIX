@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { projectAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Calendar, DollarSign, Github, Globe, Share2, Trash2, CheckCircle2, XCircle, Clock, Send, ArrowLeft, Sparkles, Hourglass } from 'lucide-react';
@@ -9,6 +9,7 @@ export default function ProjectDetailsPage() {
   const toast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,11 @@ export default function ProjectDetailsPage() {
 
   const handleApply = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) return toast.info('Please sign in to apply');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to apply');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     setSubmittingApply(true);
     try {
       const res = await projectAPI.apply(id, {
@@ -474,7 +479,11 @@ export default function ProjectDetailsPage() {
                   ) : (
                     <button
                       onClick={() => {
-                        if (!isAuthenticated) return toast.info('Please sign in to apply');
+                        if (!isAuthenticated) {
+                          toast.info('Please sign in to apply');
+                          navigate('/login', { state: { from: location } });
+                          return;
+                        }
                         setApplyModalOpen(true);
                       }}
                       className="w-full py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-sm rounded-2xl shadow-md transition-all hover:scale-102 flex items-center justify-center gap-2"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { communityAPI, postAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
@@ -8,6 +8,8 @@ import { Users, Plus, ArrowLeft, ShieldCheck, Sparkles, Lightbulb, MessageSquare
 import { useToast } from '../context/ToastContext';
 
 export default function CommunityDetailsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { idOrSlug } = useParams();
   const { user, isAuthenticated } = useAuth();
@@ -36,7 +38,11 @@ export default function CommunityDetailsPage() {
   }, [idOrSlug]);
 
   const handleJoinToggle = async () => {
-    if (!isAuthenticated) return toast.info('Please sign in to join this community');
+    if (!isAuthenticated) {
+      toast.info('Please sign in to join this community');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
     try {
       const isMember = community.members?.some(
         (m) =>

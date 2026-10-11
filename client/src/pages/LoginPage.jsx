@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { authAPI } from '../services/api';
@@ -9,6 +9,7 @@ import PasswordToggle from '../components/PasswordToggle';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const toast = useToast();
   const [formData, setFormData] = useState({
@@ -23,11 +24,15 @@ export default function LoginPage() {
   const [justLogged, setJustLogged] = useState(false);
   const { isAuthenticated } = useAuth();
 
+  const redirectPath = location.state?.from?.pathname
+    ? location.state.from.pathname + (location.state.from.search || '')
+    : '/dashboard';
+
   React.useEffect(() => {
     if (isAuthenticated && !justLogged) {
-      navigate('/dashboard');
+      navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, justLogged, navigate]);
+  }, [isAuthenticated, justLogged, navigate, redirectPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +50,7 @@ export default function LoginPage() {
             : `Welcome back, ${res.data.user.fullName?.split(' ')[0] || res.data.user.username}!`,
           { description: isAdmin ? undefined : 'You are now logged in.' }
         );
-        navigate(isAdmin ? '/admin' : '/dashboard');
+        navigate(isAdmin ? '/admin' : redirectPath, { replace: true });
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid username/email or password';

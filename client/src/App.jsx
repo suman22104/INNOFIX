@@ -30,6 +30,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Protected Route wrapper component
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -40,7 +41,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
@@ -93,21 +94,41 @@ function AppLayout() {
   
   const isLandingPage = location.pathname === '/';
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const showSidebar = isAuthenticated && !isLandingPage && !isAdminRoute;
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const showSidebar = isAuthenticated && !isLandingPage && !isAdminRoute && !isAuthPage;
+  const showMobileNav = isAuthenticated && !isLandingPage && !isAdminRoute && !isAuthPage;
   
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+      {/* Mobile top navbar for authenticated users */}
+      {showMobileNav && (
+        <div className="xl:hidden sticky top-0 z-40">
+          <Navbar />
+        </div>
+      )}
       <div className="flex flex-1 w-full relative">
         {showSidebar && <Sidebar />}
         <main className={`flex-1 w-full overflow-x-hidden ${showSidebar ? 'xl:pl-[72px]' : ''}`}>
-            <Routes>
+          <Routes>
             {/* Public / Landing Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <RegisterPage />
+                </PublicRoute>
+              }
+            />
             <Route path="/about/ai" element={<AboutAIPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/tags/:tag" element={<TagFeedPage />} />
 
             {/* Authenticated Dashboard */}
             <Route
@@ -119,15 +140,87 @@ function AppLayout() {
               }
             />
 
-            {/* Platform Exploration Routes */}
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:id" element={<ProjectDetailsPage />} />
-            <Route path="/communities" element={<CommunitiesPage />} />
-            <Route path="/communities/:idOrSlug" element={<CommunityDetailsPage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/opportunities" element={<OpportunitiesPage />} />
-            <Route path="/announcements" element={<AnnouncementsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
+            {/* Platform Feature Routes - Protected */}
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:id"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/communities"
+              element={
+                <ProtectedRoute>
+                  <CommunitiesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/communities/:idOrSlug"
+              element={
+                <ProtectedRoute>
+                  <CommunityDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events"
+              element={
+                <ProtectedRoute>
+                  <EventsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/opportunities"
+              element={
+                <ProtectedRoute>
+                  <OpportunitiesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/announcements"
+              element={
+                <ProtectedRoute>
+                  <AnnouncementsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tags/:tag"
+              element={
+                <ProtectedRoute>
+                  <TagFeedPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Social Network & User Protected Routes */}
             <Route

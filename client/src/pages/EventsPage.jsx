@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { eventAPI } from '../services/api';
 import EventCard from '../components/EventCard';
 import CreateEventModal from '../components/CreateEventModal';
@@ -7,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function EventsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { isAuthenticated, user } = useAuth();
   const [events, setEvents] = useState([]);
@@ -90,7 +93,11 @@ export default function EventsPage() {
             {user?.role !== 'admin' && (
               <button
                 onClick={() => {
-                  if (!isAuthenticated) return toast.info('Please sign in to host an event');
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to host an event');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
                   setShowModal(true);
                 }}
                 className="w-full xl:w-auto shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"
@@ -125,7 +132,14 @@ export default function EventsPage() {
             </p>
             {user?.role !== 'admin' && (
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to host an event');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
+                  setShowModal(true);
+                }}
                 className="mt-6 px-6 py-2.5 bg-amber-400 text-slate-900 font-bold rounded-2xl text-xs shadow"
               >
                 Host an Event

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { projectAPI } from '../services/api';
 import ProjectCard from '../components/ProjectCard';
 import CreateProjectModal from '../components/CreateProjectModal';
@@ -7,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function ProjectsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { isAuthenticated, user } = useAuth();
   const [projects, setProjects] = useState([]);
@@ -127,7 +130,11 @@ export default function ProjectsPage() {
             {user?.role !== 'admin' && (
               <button
                 onClick={() => {
-                  if (!isAuthenticated) return toast.info('Please sign in to launch a project');
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to launch a project');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
                   setShowModal(true);
                 }}
                 className="w-full xl:w-auto shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"
@@ -149,7 +156,7 @@ export default function ProjectsPage() {
               >
                 <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full shrink-0"></div>
                 <div className="flex-1 w-full space-y-3">
-                  <div className="w-1/3 h-5 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div className="w-1/3 h-5 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
                   <div className="w-2/3 h-4 bg-slate-100 dark:bg-slate-700 rounded"></div>
                   <div className="flex gap-2">
                     <div className="w-16 h-6 bg-slate-100 dark:bg-slate-700 rounded-lg"></div>
@@ -167,12 +174,21 @@ export default function ProjectsPage() {
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">
               We couldn't find any projects matching your search criteria. Try clearing filters or launch your own project!
             </p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-6 px-6 py-2.5 bg-amber-400 text-slate-900 font-bold rounded-2xl text-xs shadow hover:bg-amber-300"
-            >
-              Launch a Project
-            </button>
+            {user?.role !== 'admin' && (
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to launch a project');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
+                  setShowModal(true);
+                }}
+                className="mt-6 px-6 py-2.5 bg-amber-400 text-slate-900 font-bold rounded-2xl text-xs shadow hover:bg-amber-300"
+              >
+                Launch a Project
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-4">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { opportunityAPI } from '../services/api';
 import { aiAPI } from '../services/aiApi';
 import OpportunityCard from '../components/OpportunityCard';
@@ -8,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function OpportunitiesPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   const [opportunities, setOpportunities] = useState([]);
@@ -124,7 +127,11 @@ export default function OpportunitiesPage() {
             {['admin', 'company'].includes(user?.role) && (
               <button
                 onClick={() => {
-                  if (!isAuthenticated) return toast.info('Please sign in to post an opportunity');
+                  if (!isAuthenticated) {
+                    toast.info('Please sign in to post an opportunity');
+                    navigate('/login', { state: { from: location } });
+                    return;
+                  }
                   setShowModal(true);
                 }}
                 className="w-full xl:w-auto shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5"

@@ -277,37 +277,57 @@ function similarItems(type, source, candidates, limit) {
 
 async function rankPeopleYouMayKnow(user, limit = 8) {
   const uid = user._id;
+  const isCompany = user.role === 'company';
   const userFollowing = (user.following || []).map((id) => String(id));
-  const userSkills = (user.skills || []).map(norm);
-  const userSkillSet = new Set(userSkills);
+  const targetKeywords = isCompany
+    ? (user.companyNeeds || []).map(norm).filter(Boolean)
+    : (user.skills || []).map(norm).filter(Boolean);
+  const targetKeywordSet = new Set(targetKeywords);
 
-  const candidates = await User.find({
+  const query = {
     _id: { $ne: uid, $nin: user.following || [] },
-  })
+  };
+  if (isCompany) {
+    query.role = 'student';
+  }
+
+  const candidates = await User.find(query)
     .select('fullName username avatar role headline skills reputation following followers companyName')
     .limit(80)
     .lean();
 
   const scored = candidates.map((cand) => {
-    const candSkills = (cand.skills || []).map(norm);
-    const sharedSkills = candSkills.filter((s) => userSkillSet.has(s));
+    const candSkills = (cand.skills || []).map(norm).filter(Boolean);
+    const sharedSkills = candSkills.filter((s) => targetKeywordSet.has(s));
 
-    const unionCount = new Set([...userSkills, ...candSkills]).size || 1;
-    const skillScore = sharedSkills.length / unionCount;
+    let skillScore = 0;
+    if (targetKeywords.length > 0) {
+      skillScore = sharedSkills.length / targetKeywords.length;
+    }
 
     const candFollowers = (cand.followers || []).map((id) => String(id));
     const mutual = candFollowers.filter((id) => userFollowing.includes(id));
     const mutualScore = Math.min(mutual.length * 0.3, 1);
     const repScore = Math.min((cand.reputation || 60) / 200, 1);
 
-    const totalScore = 0.5 * skillScore + 0.35 * mutualScore + 0.15 * repScore;
+    const totalScore = isCompany
+      ? 0.7 * skillScore + 0.15 * mutualScore + 0.15 * repScore
+      : 0.5 * skillScore + 0.35 * mutualScore + 0.15 * repScore;
 
     const reasons = [];
-    if (mutual.length > 0) {
-      reasons.push(`${mutual.length} mutual connection${mutual.length > 1 ? 's' : ''}`);
-    }
-    if (sharedSkills.length > 0) {
-      reasons.push(`Both know ${sharedSkills.slice(0, 2).join(' & ')}`);
+    if (isCompany) {
+      if (sharedSkills.length > 0) {
+        reasons.push(`Matches need for ${sharedSkills.slice(0, 2).join(' & ')}`);
+      } else if (cand.skills && cand.skills.length > 0) {
+        reasons.push(`Skilled in ${cand.skills.slice(0, 2).join(', ')}`);
+      }
+    } else {
+      if (mutual.length > 0) {
+        reasons.push(`${mutual.length} mutual connection${mutual.length > 1 ? 's' : ''}`);
+      }
+      if (sharedSkills.length > 0) {
+        reasons.push(`Both know ${sharedSkills.slice(0, 2).join(' & ')}`);
+      }
     }
     if (!reasons.length) {
       reasons.push(cand.headline || 'Active Innovator');
@@ -331,8 +351,16 @@ async function rankPeopleYouMayKnow(user, limit = 8) {
     };
   });
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit);
+  let results = scored;
+  if (isCompany && targetKeywords.length > 0) {
+    results = scored.filter((item) => {
+      const skills = (item.user.skills || []).map(norm).filter(Boolean);
+      return skills.some((s) => targetKeywordSet.has(s));
+    });
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, limit);
 }
 
 /* ------------------------------------------------------------------ */

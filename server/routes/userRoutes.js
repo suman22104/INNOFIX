@@ -11,11 +11,16 @@ const {
   getLeaderboard,
   exportUserData,
   deleteAccount,
+  getMatchedStudents,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 
 // Public routes
 router.get('/leaderboard', getLeaderboard);
+
+// Protected student talent match for companies
+router.get('/matched-students', protect, getMatchedStudents);
+
 router.get('/profile/:usernameOrId', getUserProfile);
 router.get('/:id/followers', getUserFollowers);
 router.get('/:id/following', getUserFollowing);
