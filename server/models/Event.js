@@ -63,6 +63,11 @@ const eventSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User',
         },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'declined'],
+          default: 'pending',
+        },
         registeredAt: {
           type: Date,
           default: Date.now,
@@ -86,11 +91,16 @@ const eventSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
 eventSchema.virtual('attendeesCount').get(function () {
-  return this.attendees ? this.attendees.length : 0;
+  if (!this.attendees) return 0;
+  return this.attendees.filter(
+    (a) => !a.status || a.status === 'accepted'
+  ).length;
 });
 
 module.exports = mongoose.model('Event', eventSchema);

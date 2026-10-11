@@ -122,6 +122,7 @@ export const eventAPI = {
   create: (data) => API.post('/events', data),
   delete: (id) => API.delete(`/events/${id}`),
   register: (id) => API.post(`/events/${id}/register`),
+  respondRsvp: (id, userId, status) => API.put(`/events/${id}/attendees/${userId}`, { status }),
 };
 
 export const opportunityAPI = {

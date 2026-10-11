@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Check, CheckCheck, UserPlus, Heart, MessageSquare, Briefcase, Calendar, Sparkles, X } from 'lucide-react';
-import { notificationAPI } from '../services/api';
+import { notificationAPI, eventAPI } from '../services/api';
 import { useSocket } from '../context/SocketContext';
+import { useToast } from '../context/ToastContext';
 import SwipeRow from './SwipeRow';
 
 export default function NotificationDropdown({ isSidebar = false }) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
   const { unreadNotifications, setUnreadNotifications, socket } = useSocket();
   const dropdownRef = useRef(null);
 
@@ -80,6 +83,39 @@ export default function NotificationDropdown({ isSidebar = false }) {
     } catch (err) {}
   };
 
+  const handleRsvpDecision = async (notifId, eventId, userId, status) => {
+    setProcessingId(notifId);
+    try {
+      const eId = eventId ? (eventId._id || eventId).toString() : null;
+      const uId = userId ? (userId._id || userId).toString() : null;
+      if (!eId || !uId) {
+        toast.error('Missing event or user details in notification');
+        return;
+      }
+      const res = await eventAPI.respondRsvp(eId, uId, status);
+      if (res.data.success) {
+        toast.success(status === 'accepted' ? 'RSVP Accepted!' : 'RSVP Declined');
+        await handleMarkAsRead(notifId);
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n._id === notifId
+              ? {
+                  ...n,
+                  message: `${n.message} (${status === 'accepted' ? 'Accepted' : 'Declined'})`,
+                  data: { ...n.data, responded: true, decisionStatus: status },
+                }
+              : n
+          )
+        );
+      }
+    } catch (err) {
+      console.error('RSVP decision error:', err);
+      toast.error(err.response?.data?.message || 'Failed to update RSVP decision');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case 'follow':
@@ -93,6 +129,9 @@ export default function NotificationDropdown({ isSidebar = false }) {
       case 'project_accept':
         return <Briefcase className="w-4 h-4 text-amber-500" />;
       case 'event_reminder':
+      case 'event_rsvp':
+      case 'event_accept':
+      case 'event_decline':
         return <Calendar className="w-4 h-4 text-purple-500" />;
       default:
         return <Sparkles className="w-4 h-4 text-amber-500" />;
@@ -217,6 +256,63 @@ export default function NotificationDropdown({ isSidebar = false }) {
                             })}
                           </span>
                         </Link>
+                        {n.type === 'event_rsvp' && (n.data?.eventId || n.data?.event) && (n.data?.userId || n.data?.user || n.sender?._id || n.sender) && !n.data?.responded && (
+                          <div
+                            className="flex items-center gap-2 mt-2"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              disabled={processingId === n._id}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const evId = n.data?.eventId?._id || n.data?.eventId || n.data?.event?._id || n.data?.event;
+                                const uId = n.data?.userId?._id || n.data?.userId || n.data?.user?._id || n.data?.user || n.sender?._id || n.sender;
+                                handleRsvpDecision(n._id, evId, uId, 'accepted');
+                              }}
+                              className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50 cursor-pointer"
+                            >
+                              <Check className="w-3 h-3" />
+                              <span>{processingId === n._id ? 'Saving...' : 'Accept'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={processingId === n._id}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const evId = n.data?.eventId?._id || n.data?.eventId || n.data?.event?._id || n.data?.event;
+                                const uId = n.data?.userId?._id || n.data?.userId || n.data?.user?._id || n.data?.user || n.sender?._id || n.sender;
+                                handleRsvpDecision(n._id, evId, uId, 'declined');
+                              }}
+                              className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 active:scale-95 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 border border-rose-200 dark:border-rose-900/50 disabled:opacity-50 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                              <span>Decline</span>
+                            </button>
+                          </div>
+                        )}
+                        {n.type === 'event_rsvp' && n.data?.responded && (
+                          <div className="mt-2">
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                              n.data.decisionStatus === 'accepted'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400'
+                            }`}>
+                              {n.data.decisionStatus === 'accepted' ? '✓ Accepted' : '✗ Declined'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {!n.read && (
                         <button
@@ -317,6 +413,63 @@ export default function NotificationDropdown({ isSidebar = false }) {
                             })}
                           </span>
                         </Link>
+                        {n.type === 'event_rsvp' && (n.data?.eventId || n.data?.event) && (n.data?.userId || n.data?.user || n.sender?._id || n.sender) && !n.data?.responded && (
+                          <div
+                            className="flex items-center gap-2 mt-2"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              disabled={processingId === n._id}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const evId = n.data?.eventId?._id || n.data?.eventId || n.data?.event?._id || n.data?.event;
+                                const uId = n.data?.userId?._id || n.data?.userId || n.data?.user?._id || n.data?.user || n.sender?._id || n.sender;
+                                handleRsvpDecision(n._id, evId, uId, 'accepted');
+                              }}
+                              className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50 cursor-pointer"
+                            >
+                              <Check className="w-3 h-3" />
+                              <span>{processingId === n._id ? 'Saving...' : 'Accept'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={processingId === n._id}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const evId = n.data?.eventId?._id || n.data?.eventId || n.data?.event?._id || n.data?.event;
+                                const uId = n.data?.userId?._id || n.data?.userId || n.data?.user?._id || n.data?.user || n.sender?._id || n.sender;
+                                handleRsvpDecision(n._id, evId, uId, 'declined');
+                              }}
+                              className="px-2.5 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 active:scale-95 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 border border-rose-200 dark:border-rose-900/50 disabled:opacity-50 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                              <span>Decline</span>
+                            </button>
+                          </div>
+                        )}
+                        {n.type === 'event_rsvp' && n.data?.responded && (
+                          <div className="mt-2">
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                              n.data.decisionStatus === 'accepted'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400'
+                            }`}>
+                              {n.data.decisionStatus === 'accepted' ? '✓ Accepted' : '✗ Declined'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {!n.read && (
                         <button

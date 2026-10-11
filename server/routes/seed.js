@@ -859,7 +859,16 @@ const seedData = async () => {
       },
     ];
 
-    const createdEvents = await Event.insertMany(eventsData);
+    const normalizedEvents = eventsData.map((e) => ({
+      ...e,
+      attendees: (e.attendees || []).map((uid) => ({
+        user: uid,
+        status: 'accepted',
+        registeredAt: new Date(),
+      })),
+    }));
+
+    const createdEvents = await Event.insertMany(normalizedEvents);
 
     // 8 Opportunities (Internships, Gigs, Research, Grants)
     const opportunitiesData = [

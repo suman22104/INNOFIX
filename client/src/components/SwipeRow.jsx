@@ -216,6 +216,9 @@ export default function SwipeRow({
 
   const down = e => {
     if (disabled || n === 0 || phase !== 'idle' || grip.current || e.button !== 0) return;
+    if (e.target.closest('button, a, input, select, textarea, [data-no-swipe], [data-interactive]')) {
+      return;
+    }
     x.stop();
     heading.current = null;
     grip.current = {
