@@ -1,0 +1,38 @@
+/* INNOFIX Admin Console Styles */
+
+/* 
+  We use Tailwind classes primarily, but any global 
+  overrides specific to the admin section go here.
+*/
+
+.admin-layout-wrapper {
+  /* Prevent scrolling on the body, let internal panes scroll */
+  overflow: hidden;
+}
+
+/* Custom scrollbar for admin panels to match dark/dense aesthetic */
+.admin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+}
+
+.dark .admin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(51, 65, 85, 0.5);
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.5);
+}
+
+.dark .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(51, 65, 85, 0.8);
+}

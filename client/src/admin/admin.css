@@ -1,0 +1,20 @@
+/* Admin Console Specific Styles */
+
+.admin-layout-wrapper {
+  /* Prevent body scroll when in admin */
+}
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.dark .admin-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
