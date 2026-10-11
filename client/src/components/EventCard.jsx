@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, CheckCircle, ExternalLink, Link, Globe, Trophy, Video, Wrench, Coffee, Gift } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+  Link,
+  Globe,
+  Trophy,
+  Video,
+  Wrench,
+  Coffee,
+  Gift,
+  UserCheck,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { eventAPI } from '../services/api';
 import { useToast } from '../context/ToastContext';
