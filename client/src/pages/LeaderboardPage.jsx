@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Medal, Award, Flame, UserPlus, Check, Star, Info, ChevronDown, ChevronUp, History, Filter } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, UserPlus, Check, Star, Info, ChevronDown, ChevronUp, History, Filter, GraduationCap, Building2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMedal } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LeaderboardPage() {
   const { user: currentUser, updateUser } = useAuth();
   const [leaders, setLeaders] = useState([]);
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('student');
   const [periodFilter, setPeriodFilter] = useState('all'); // all, week, month
   const [loading, setLoading] = useState(true);
   const [followingMap, setFollowingMap] = useState({});
@@ -141,14 +141,14 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             {/* Period Tabs */}
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 w-fit text-xs self-end">
+            <div className="flex items-center bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 w-full sm:w-80 text-xs self-end shadow-xs">
               {['all', 'month', 'week'].map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriodFilter(p)}
-                  className={`px-3 py-1.5 rounded-xl font-extrabold transition-all uppercase text-[11px] ${
+                  className={`flex-1 py-1.5 px-2 rounded-xl font-extrabold transition-all uppercase text-[11px] text-center ${
                     periodFilter === p
                       ? 'bg-amber-600 text-white shadow-md'
                       : 'text-slate-700 hover:text-slate-950 hover:bg-white/50'
@@ -159,22 +159,31 @@ export default function LeaderboardPage() {
               ))}
             </div>
 
-            {/* Role Filters */}
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 w-fit text-xs self-end">
-              {['all', 'student', 'company'].map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRoleFilter(r)}
-                  className={`px-3 py-1.5 rounded-xl font-extrabold transition-all uppercase text-[11px] flex items-center gap-1 ${
-                    roleFilter === r
-                      ? 'bg-slate-950 text-white shadow-md'
-                      : 'text-slate-700 hover:text-slate-950 hover:bg-white/50'
-                  }`}
-                >
-                  {r === 'all' ? <Filter className="w-3 h-3" /> : null}
-                  {r === 'all' ? 'All Roles' : r + 's'}
-                </button>
-              ))}
+            {/* Role Two-State Segmented Toggle Switch with Icons */}
+            <div className="flex items-center bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/50 w-full sm:w-80 text-xs self-end shadow-xs">
+              <button
+                onClick={() => setRoleFilter('student')}
+                className={`flex-1 py-1.5 px-3 rounded-xl font-extrabold transition-all uppercase text-[11px] flex items-center justify-center gap-1.5 ${
+                  roleFilter === 'student'
+                    ? 'bg-slate-950 text-white shadow-md'
+                    : 'text-slate-700 hover:text-slate-950 hover:bg-white/50'
+                }`}
+              >
+                <GraduationCap className={`w-3.5 h-3.5 ${roleFilter === 'student' ? 'text-amber-400' : 'text-slate-500'}`} />
+                <span>Students</span>
+              </button>
+
+              <button
+                onClick={() => setRoleFilter('company')}
+                className={`flex-1 py-1.5 px-3 rounded-xl font-extrabold transition-all uppercase text-[11px] flex items-center justify-center gap-1.5 ${
+                  roleFilter === 'company'
+                    ? 'bg-slate-950 text-white shadow-md'
+                    : 'text-slate-700 hover:text-slate-950 hover:bg-white/50'
+                }`}
+              >
+                <Building2 className={`w-3.5 h-3.5 ${roleFilter === 'company' ? 'text-amber-400' : 'text-slate-500'}`} />
+                <span>Companies</span>
+              </button>
             </div>
           </div>
         </div>
@@ -249,39 +258,64 @@ export default function LeaderboardPage() {
           
           {/* PODIUM (Top 3) */}
           {top3.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 items-end max-w-3xl mx-auto pt-8">
-              {[
-                { data: top3[1], rank: 2, height: 'h-32', color: 'bg-slate-200 dark:bg-slate-700' },
-                { data: top3[0], rank: 1, height: 'h-40', color: 'bg-amber-300 dark:bg-amber-500' },
-                { data: top3[2], rank: 3, height: 'h-24', color: 'bg-orange-200 dark:bg-orange-800/60' }
-              ].map((podium, i) => podium.data && (
-                <div key={podium.data._id} className="flex flex-col items-center group relative">
-                  {/* User Info */}
-                  <div className="flex flex-col items-center mb-2 text-center transform transition-transform group-hover:-translate-y-2">
-                    <div className="relative mb-2">
-                      <img
-                        src={podium.data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(podium.data.fullName)}&background=111827&color=fff&bold=true`}
-                        alt=""
-                        className={`rounded-full object-cover border-4 shadow-xl ${podium.rank === 1 ? 'w-20 h-20 border-amber-400' : 'w-16 h-16 border-slate-300 dark:border-slate-600'}`}
-                      />
-                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900 rounded-full shadow-md w-8 h-8 flex items-center justify-center">
-                        {getRankBadge(podium.rank)}
+            <div key={`podium-${periodFilter}-${roleFilter}`} className="max-w-3xl mx-auto pt-8">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 items-end">
+                {[
+                  { 
+                    data: top3[1], 
+                    rank: 2, 
+                    height: 'h-32', 
+                    color: 'bg-slate-200 dark:bg-slate-700',
+                    columnAnim: 'animate-podium-rise-2',
+                    userAnim: 'animate-user-rise-2'
+                  },
+                  { 
+                    data: top3[0], 
+                    rank: 1, 
+                    height: 'h-40', 
+                    color: 'bg-amber-300 dark:bg-amber-500 shadow-[0_-4px_20px_rgba(251,191,36,0.25)]',
+                    columnAnim: 'animate-podium-rise-1',
+                    userAnim: 'animate-user-rise-1'
+                  },
+                  { 
+                    data: top3[2], 
+                    rank: 3, 
+                    height: 'h-24', 
+                    color: 'bg-orange-200 dark:bg-orange-800/60',
+                    columnAnim: 'animate-podium-rise-3',
+                    userAnim: 'animate-user-rise-3'
+                  }
+                ].map((podium) => podium.data && (
+                  <div key={podium.data._id} className="flex flex-col items-center group relative">
+                    {/* User Info Rising from the Baseline */}
+                    <div className={`flex flex-col items-center mb-2 text-center w-full ${podium.userAnim}`}>
+                      <div className="transform transition-transform duration-200 group-hover:-translate-y-2 flex flex-col items-center">
+                        <div className="relative mb-2">
+                          <img
+                            src={podium.data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(podium.data.fullName)}&background=111827&color=fff&bold=true`}
+                            alt=""
+                            className={`rounded-full object-cover border-4 shadow-xl ${podium.rank === 1 ? 'w-20 h-20 border-amber-400' : 'w-16 h-16 border-slate-300 dark:border-slate-600'}`}
+                          />
+                          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900 rounded-full shadow-md w-8 h-8 flex items-center justify-center">
+                            {getRankBadge(podium.rank)}
+                          </div>
+                        </div>
+                        <Link to={`/profile?username=${podium.data.username}`} className="font-black text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-[100px] hover:underline">
+                          {podium.data.fullName.split(' ')[0]}
+                        </Link>
+                        <div className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 text-xs">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          {getScoreField(podium.data)}
+                        </div>
                       </div>
                     </div>
-                    <Link to={`/profile?username=${podium.data.username}`} className="font-black text-sm sm:text-base text-slate-900 dark:text-white truncate max-w-[100px] hover:underline">
-                      {podium.data.fullName.split(' ')[0]}
-                    </Link>
-                    <div className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 text-xs">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      {getScoreField(podium.data)}
+                    {/* Pedestal Column Rising from the Baseline */}
+                    <div className={`w-full origin-bottom ${podium.height} ${podium.color} ${podium.columnAnim} rounded-t-2xl shadow-inner flex items-start justify-center pt-4 border border-black/5 dark:border-white/5`}>
+                      <span className="text-xl font-black text-black/20 dark:text-white/20">{podium.rank}</span>
                     </div>
                   </div>
-                  {/* Pedestal */}
-                  <div className={`w-full ${podium.height} ${podium.color} rounded-t-2xl shadow-inner flex items-start justify-center pt-4 border border-black/5 dark:border-white/5`}>
-                    <span className="text-xl font-black text-black/20 dark:text-white/20">{podium.rank}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
