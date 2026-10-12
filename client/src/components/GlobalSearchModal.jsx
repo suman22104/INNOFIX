@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Users, Compass, MessageSquare, Calendar, Briefcase, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, X, Sparkles, ArrowRight } from 'lucide-react';
 import { searchAPI } from '../services/api';
+import { ResultGroups, SEARCH_TABS, isEmptyResults } from './SearchResults';
 
 export default function GlobalSearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
@@ -17,45 +18,46 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
     } else {
       setQuery('');
       setResults(null);
+      setActiveTab('all');
     }
   }, [isOpen]);
 
-  // Handle escape key
+  // Esc / Ctrl+K close the modal (opening is handled by the search bar that renders it)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) onClose();
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if (!isOpen) return;
+      if (e.key === 'Escape') onClose();
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        if (isOpen) onClose();
-        else onClose(); // parent can toggle
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Debounced search query
+  // Debounced search
   useEffect(() => {
     if (!query.trim()) {
       setResults(null);
-      return;
+      return undefined;
     }
-
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await searchAPI.search(query, activeTab, 6);
-        if (res.data.success) {
-          setResults(res.data.results);
-        }
+        if (!cancelled && res.data.success) setResults(res.data.results);
       } catch (err) {
         console.error('Search error:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }, 250);
-
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query, activeTab]);
 
   if (!isOpen) return null;
@@ -65,17 +67,18 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
     navigate(url);
   };
 
-  const tabs = [
-    { id: 'all', label: 'All' },
-    { id: 'users', label: 'People' },
-    { id: 'posts', label: 'Posts' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'communities', label: 'Communities' },
-    { id: 'events', label: 'Events' },
-  ];
+  const seeAll = () => {
+    const q = query.trim();
+    if (!q) return;
+    handleSelect(`/search?q=${encodeURIComponent(q)}${activeTab !== 'all' ? `&type=${activeTab}` : ''}`);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+    <div
+      data-global-search
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 p-4 bg-slate-900/60 backdrop-blur-sm"
+    >
       <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-slate-800">
@@ -85,7 +88,8 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search people, posts, skills, #tags, projects..."
+            onKeyDown={(e) => e.key === 'Enter' && seeAll()}
+            placeholder="Search people, events, opportunities, projects, #tags..."
             className="w-full bg-transparent text-sm sm:text-base text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none"
           />
           {query && (
@@ -106,7 +110,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
 
         {/* Tab Filters */}
         <div className="flex items-center gap-2 px-5 py-2.5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 overflow-x-auto text-xs">
-          {tabs.map((tab) => (
+          {SEARCH_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -121,7 +125,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           ))}
         </div>
 
-        {/* Search Results Body */}
+        {/* Results */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           {loading && (
             <div className="py-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
@@ -134,101 +138,37 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
             <div className="py-12 text-center">
               <Sparkles className="w-10 h-10 text-amber-400 mx-auto mb-3" />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                Type anything to discover on INNOFIX AI
+                Find people, events, opportunities and more
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Try searching for "React", "Python", "@alexm", or "#ai"
+                Try a name, &quot;React&quot;, &quot;@username&quot;, or &quot;#ai&quot;
               </p>
             </div>
           )}
 
           {!loading && query && results && (
-            <div className="space-y-6">
-              {/* Users */}
-              {results.users?.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-blue-500" /> People ({results.users.length})
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {results.users.map((u) => (
-                      <div
-                        key={u._id}
-                        onClick={() => handleSelect(`/profile?username=${u.username}`)}
-                        className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-all flex items-center gap-3"
-                      >
-                        <img
-                          src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=FBC02D&color=111827&bold=true`}
-                          alt={u.fullName}
-                          className="w-10 h-10 rounded-full object-cover border border-amber-400/40"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{u.fullName}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">@{u.username} · {u.role}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Projects */}
-              {results.projects?.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 text-amber-500" /> Projects ({results.projects.length})
-                  </div>
-                  <div className="space-y-2">
-                    {results.projects.map((p) => (
-                      <div
-                        key={p._id}
-                        onClick={() => handleSelect(`/projects/${p._id}`)}
-                        className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-all flex items-center justify-between gap-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{p.title}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{p.shortSummary || p.description}</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Posts */}
-              {results.posts?.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> Posts ({results.posts.length})
-                  </div>
-                  <div className="space-y-2">
-                    {results.posts.map((post) => (
-                      <div
-                        key={post._id}
-                        onClick={() => handleSelect(`/dashboard?postId=${post._id}`)}
-                        className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-all"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{post.author?.fullName}</span>
-                          <span className="text-[10px] text-slate-400">@{post.author?.username}</span>
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">{post.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* No results */}
-              {Object.values(results).every((arr) => !arr || arr.length === 0) && (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  No matching results found for "{query}".
-                </div>
-              )}
-            </div>
+            isEmptyResults(results) ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                No matching results found for &quot;{query}&quot;.
+              </div>
+            ) : (
+              <ResultGroups results={results} onSelect={handleSelect} />
+            )
           )}
         </div>
+
+        {/* Footer */}
+        {query.trim() && (
+          <button
+            onClick={seeAll}
+            className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+          >
+            <span>See all results for &quot;{query.trim()}&quot;</span>
+            <span className="flex items-center gap-1.5 text-slate-400">
+              Enter <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

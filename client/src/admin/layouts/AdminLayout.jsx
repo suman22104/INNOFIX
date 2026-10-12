@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import { CommandPalette } from '../components/ui/CommandPalette';
+import NavSearch from '../../components/NavSearch';
 import '../admin.css';
 
 // Admin Pages
@@ -42,7 +43,8 @@ export function AdminLayout() {
   // Command palette listener
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+      // Ctrl/Cmd+K is the global search (NavSearch); Ctrl/Cmd+Shift+K jumps between admin pages
+      if (e.key.toLowerCase() === 'k' && e.shiftKey && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         setCmdOpen(o => !o);
       }
@@ -130,17 +132,17 @@ export function AdminLayout() {
         
         {/* TOP HEADER */}
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 shrink-0">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
             <button className="md:hidden p-2 -ml-2 text-slate-500" onClick={() => setSidebarOpen(true)}>
               <Menu className="w-5 h-5" />
             </button>
-            <button 
+            <NavSearch />
+            <button
               onClick={() => setCmdOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-64"
+              title="Jump to an admin page (Ctrl+Shift+K)"
+              className="hidden sm:flex p-2 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <Search className="w-4 h-4" />
-              <span>Global Search...</span>
-              <kbd className="ml-auto text-[10px] font-black uppercase bg-white dark:bg-slate-900 px-1.5 rounded border border-slate-200 dark:border-slate-700">Ctrl K</kbd>
+              <Zap className="w-4 h-4" />
             </button>
           </div>
           

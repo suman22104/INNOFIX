@@ -1,9 +1,10 @@
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import NavSearch from './components/NavSearch';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -25,6 +26,7 @@ import TagFeedPage from './pages/TagFeedPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import AboutAIPage from './pages/AboutAIPage';
 import NotFoundPage from './pages/NotFoundPage';
+import SearchPage from './pages/SearchPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Protected Route wrapper component
@@ -104,6 +106,17 @@ function AppLayout() {
       {showMobileNav && (
         <div className="xl:hidden sticky top-0 z-40">
           <Navbar />
+        </div>
+      )}
+      {/* Desktop top bar for signed-in users: INNOFIX + search (all roles) */}
+      {showSidebar && (
+        <div className="hidden xl:block sticky top-0 z-30 xl:pl-[72px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center h-16 px-6 lg:px-8">
+            <Link to="/dashboard" className="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none">
+              INNO<span className="text-amber-500">FIX</span>
+            </Link>
+            <NavSearch />
+          </div>
         </div>
       )}
       <div className="flex flex-1 w-full relative">
@@ -210,6 +223,14 @@ function AppLayout() {
               element={
                 <ProtectedRoute>
                   <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
                 </ProtectedRoute>
               }
             />

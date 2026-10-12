@@ -177,7 +177,7 @@ const TILES = [
 ];
 
 const CAPTIONS = [
-  { title: 'INNOFIX AI', sub: 'Find your team. Build it. Ship it.' },
+  { title: 'INNOFIX AI', sub: 'Learn, INNOvate, FIX.' },
   { title: 'Projects', sub: 'Join teams building real things' },
   { title: 'Opportunities', sub: 'Internships & gigs matched to you' },
 ];

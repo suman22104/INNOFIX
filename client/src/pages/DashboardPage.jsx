@@ -9,7 +9,8 @@ import RecommendedForYou from '../components/RecommendedForYou';
 import PeopleYouMayKnow from '../components/PeopleYouMayKnow';
 import CompanyTalentMatch from '../components/CompanyTalentMatch';
 import AIAssistantDrawer from '../components/AIAssistantDrawer';
-import { Rocket, Calendar, Plus, Sparkles, Flame, UserCheck, Wand2, Image as ImageIcon, FileText, MessageSquare, TrendingUp, Bookmark, PenLine } from 'lucide-react';
+import SearchResults from '../components/SearchResults';
+import { Rocket, Calendar, Plus, Sparkles, Flame, UserCheck, Wand2, Image as ImageIcon, FileText, MessageSquare, TrendingUp, Bookmark, PenLine, Search, X } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -19,6 +20,8 @@ export default function DashboardPage() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showAICopilot, setShowAICopilot] = useState(false);
+  const [feedQuery, setFeedQuery] = useState('');
+  const isSearching = feedQuery.trim().length > 0;
   const [stats, setStats] = useState({
     activeProjects: 0,
     upcomingEvents: 0,
@@ -118,18 +121,36 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Feed search: people, events, opportunities, projects, communities, posts */}
+            <div className="flex items-center gap-3 px-4 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm focus-within:border-amber-400 transition-colors">
+              <Search className="w-4 h-4 text-amber-500 shrink-0" />
+              <input
+                value={feedQuery}
+                onChange={(e) => setFeedQuery(e.target.value)}
+                placeholder="Search people, events, opportunities, projects..."
+                className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none"
+              />
+              {feedQuery && (
+                <button onClick={() => setFeedQuery('')} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Clear search">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {isSearching && <SearchResults query={feedQuery} />}
+
             {/* Smart Feed Tabs moved to Right Sidebar */}
 
             {/* Company Talent Matching Section for Company Accounts */}
-            {user?.role === 'company' && feedTab === 'foryou' && (
+            {!isSearching && user?.role === 'company' && feedTab === 'foryou' && (
               <CompanyTalentMatch />
             )}
 
             {/* Content-Based Recommender Section (Hidden for Company Users) */}
-            {user?.role !== 'company' && feedTab === 'foryou' && <RecommendedForYou />}
+            {!isSearching && user?.role !== 'company' && feedTab === 'foryou' && <RecommendedForYou />}
 
             {/* Posts Stream */}
-            <div className="pb-10">
+            <div className={`pb-10 ${isSearching ? 'hidden' : ''}`}>
               {loading ? (
                 <div className="space-y-5">
                   {[1, 2, 3].map((n) => (
@@ -191,7 +212,7 @@ export default function DashboardPage() {
           </div>
 
           {/* RIGHT SIDEBAR (Network & Explore) */}
-          <aside className="hidden xl:block fixed right-0 top-0 h-screen w-[360px] pt-6 pb-20 px-4 space-y-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-30 bg-transparent">
+          <aside className="hidden xl:block fixed right-0 top-16 h-[calc(100vh-4rem)] w-[360px] pt-6 pb-20 px-4 space-y-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-30 bg-transparent">
             {/* Feed Explorer Menu (Replaced Profile Card) */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
               <div className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-3">

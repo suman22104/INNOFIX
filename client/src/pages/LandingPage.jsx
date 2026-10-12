@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import Hyperspeed from '../components/Hyperspeed';
 import { hyperspeedPresets } from '../components/HyperSpeedPresets';
 import FeaturesShowcase from '../components/FeaturesShowcase';
+import NavSearch from '../components/NavSearch';
 
 export default function LandingPage() {
   const { isAuthenticated, logout } = useAuth();
@@ -97,8 +98,11 @@ export default function LandingPage() {
             INNOFIX
           </span>
         </div>
-        
-        <div className="hidden md:flex items-center gap-8">
+
+        {/* Search: signed-in users only (student, company and admin) */}
+        {isAuthenticated && <NavSearch />}
+
+        <div className={`hidden md:flex items-center gap-8 ${isAuthenticated ? 'md:mr-6 lg:mr-8' : ''}`}>
           <a href="#faq" className="text-sm font-bold text-slate-600 hover:text-amber-600 dark:text-slate-300 dark:hover:text-amber-400 transition-colors">Support</a>
           <a href="#features" className="text-sm font-bold text-slate-600 hover:text-amber-600 dark:text-slate-300 dark:hover:text-amber-400 transition-colors">Features</a>
         </div>
@@ -121,13 +125,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white font-display leading-[1.1] max-w-4xl mx-auto flex flex-wrap justify-center gap-x-3 sm:gap-x-4 lg:gap-x-5 gap-y-2 pb-4">
             {[
-              { text: "Find", hl: false },
-              { text: "your", hl: false },
-              { text: "team.", hl: false },
-              { text: "Build", hl: true },
-              { text: "it.", hl: true },
-              { text: "Ship", hl: false },
-              { text: "it.", hl: false }
+              { text: "Learn,", hl: false },
+              { text: "INNOvate,", hl: true },
+              { text: "FIX.", hl: false }
             ].map((word, i) => (
               <span key={i} className="overflow-hidden inline-flex">
                 <motion.span

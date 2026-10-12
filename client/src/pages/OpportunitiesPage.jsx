@@ -15,7 +15,7 @@ export default function OpportunitiesPage() {
   const { user, isAuthenticated } = useAuth();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => new URLSearchParams(location.search).get('search') || '');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedWorkplace, setSelectedWorkplace] = useState('all');
   const [showModal, setShowModal] = useState(false);
